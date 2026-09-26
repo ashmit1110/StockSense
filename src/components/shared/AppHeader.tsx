@@ -1,0 +1,77 @@
+import { useState } from "react";
+import { Link, NavLink } from "react-router-dom";
+import { Menu, Package2, UserRound, X } from "lucide-react";
+
+const linkClass = ({ isActive }: { isActive: boolean }) =>
+  `nav-link${isActive ? " nav-link-active" : ""}`;
+
+export function AppHeader() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <header className="border-b border-line bg-panel/90 backdrop-blur">
+      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <Link to="/dashboard" className="flex shrink-0 items-center gap-2.5" aria-label="StockSense dashboard">
+          <span className="grid size-9 place-items-center rounded-xl bg-accent text-white shadow-lg shadow-accent/20">
+            <Package2 size={19} aria-hidden="true" />
+          </span>
+          <span className="text-sm font-semibold tracking-wide">StockSense</span>
+        </Link>
+
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
+          <NavLink to="/dashboard" className={linkClass}>Dashboard</NavLink>
+          <details className="nav-menu group">
+            <summary>Operations <span aria-hidden="true">⌄</span></summary>
+            <div className="nav-dropdown">
+              <NavLink to="/operations/receipts">Receipts</NavLink>
+              <NavLink to="/operations/deliveries">Deliveries</NavLink>
+              <NavLink to="/operations/transfers">Transfers</NavLink>
+              <NavLink to="/operations/adjustments">Adjustments</NavLink>
+            </div>
+          </details>
+          <NavLink to="/products" className={linkClass}>Products</NavLink>
+          <NavLink to="/move-history" className={linkClass}>Move History</NavLink>
+          <details className="nav-menu group">
+            <summary>Settings <span aria-hidden="true">⌄</span></summary>
+            <div className="nav-dropdown">
+              <NavLink to="/settings/warehouses">Warehouses</NavLink>
+              <NavLink to="/settings/locations">Locations</NavLink>
+            </div>
+          </details>
+        </nav>
+
+        <div className="hidden md:block">
+          <NavLink to="/profile" className="profile-control" aria-label="My profile">
+            <UserRound size={17} aria-hidden="true" />
+          </NavLink>
+        </div>
+
+        <button
+          className="icon-button md:hidden"
+          type="button"
+          aria-label={open ? "Close navigation" : "Open navigation"}
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
+
+      {open && (
+        <nav className="grid gap-1 border-t border-line px-4 py-3 md:hidden" aria-label="Mobile navigation">
+          <NavLink onClick={() => setOpen(false)} to="/dashboard" className={linkClass}>Dashboard</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/operations/receipts" className={linkClass}>Receipts</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/operations/deliveries" className={linkClass}>Deliveries</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/operations/transfers" className={linkClass}>Transfers</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/operations/adjustments" className={linkClass}>Adjustments</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/products" className={linkClass}>Products</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/stock" className={linkClass}>Stock</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/move-history" className={linkClass}>Move History</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/settings/warehouses" className={linkClass}>Warehouses</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/settings/locations" className={linkClass}>Locations</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/profile" className={linkClass}>My Profile</NavLink>
+        </nav>
+      )}
+    </header>
+  );
+}
