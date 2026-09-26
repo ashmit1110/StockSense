@@ -22,26 +22,35 @@ import { toAppError } from "@/lib/errors";
 import type { OperationDetail, Shortage } from "@/types/domain";
 import type { OperationConfig } from "./operationConfig";
 
-const schema = z.object({
-  partnerName: z.string(),
-  scheduledDate: z.string().min(1, "Choose a scheduled date."),
-  responsibleUserId: z.string(),
-  locationId: z.string().min(1, "Choose a location."),
-  reason: z.string(),
-  lines: z.array(z.object({
-    productId: z.string().min(1, "Choose a product."),
-    quantity: z.string().trim().min(1, "Enter a quantity.").transform(Number).pipe(z.number().finite().min(0, "Quantity cannot be negative.")),
-  })).min(1, "Add at least one product."),
-}).superRefine((values, context) => {
-  values.lines.forEach((line, index) => {
-    if (line.productId && line.quantity === 0) {
-      context.addIssue({ code: "custom", path: ["lines", index, "quantity"], message: "Quantity must be greater than zero." });
+function operationFormSchema(config: OperationConfig) {
+  return z.object({
+    partnerName: z.string(),
+    scheduledDate: z.string().min(1, "Choose a scheduled date."),
+    responsibleUserId: z.string(),
+    sourceLocationId: z.string(),
+    destinationLocationId: z.string(),
+    reason: z.string(),
+    lines: z.array(z.object({
+      productId: z.string().min(1, "Choose a product."),
+      quantity: z.string().trim().min(1, "Enter a quantity.").transform(Number).pipe(z.number().finite().min(0, "Quantity cannot be negative.")),
+    })).min(1, "Add at least one product."),
+  }).superRefine((values, context) => {
+    if ((config.locationMode === "source" || config.locationMode === "both") && !values.sourceLocationId) {
+      context.addIssue({ code: "custom", path: ["sourceLocationId"], message: "Choose a source location." });
     }
+    if ((config.locationMode === "destination" || config.locationMode === "both") && !values.destinationLocationId) {
+      context.addIssue({ code: "custom", path: ["destinationLocationId"], message: "Choose a destination location." });
+    }
+    values.lines.forEach((line, index) => {
+      if (config.type !== "ADJUSTMENT" && line.productId && line.quantity === 0) {
+        context.addIssue({ code: "custom", path: ["lines", index, "quantity"], message: "Quantity must be greater than zero." });
+      }
+    });
   });
-});
+}
 
-type FormInput = z.input<typeof schema>;
-type FormOutput = z.output<typeof schema>;
+type FormInput = z.input<ReturnType<typeof operationFormSchema>>;
+type FormOutput = z.output<ReturnType<typeof operationFormSchema>>;
 
 function todayLocal() {
   const date = new Date();
@@ -54,22 +63,21 @@ function detailDefaults(detail: OperationDetail): FormInput {
     partnerName: detail.partnerName ?? "",
     scheduledDate: detail.scheduledDate.slice(0, 10),
     responsibleUserId: detail.responsibleUser?.id ?? "",
-    locationId: (detail.sourceLocation ?? detail.destinationLocation)?.id ?? "",
+    sourceLocationId: detail.sourceLocation?.id ?? "",
+    destinationLocationId: detail.destinationLocation?.id ?? "",
     reason: detail.reason ?? "",
     lines: detail.lines.map((line) => ({ productId: line.productId, quantity: String(line.quantity) })),
   };
 }
 
 function toOperationInput(values: FormOutput, config: OperationConfig): OperationInput {
-  const source = config.locationMode === "source" ? values.locationId : null;
-  const destination = config.locationMode === "destination" ? values.locationId : null;
   return {
     type: config.type,
     scheduledDate: values.scheduledDate,
     responsibleUserId: values.responsibleUserId || null,
     partnerName: values.partnerName.trim() || null,
-    sourceLocationId: source,
-    destinationLocationId: destination,
+    sourceLocationId: values.sourceLocationId || null,
+    destinationLocationId: values.destinationLocationId || null,
     reason: values.reason.trim() || null,
     lines: values.lines.map((line) => ({ productId: line.productId, quantity: line.quantity })),
   };
@@ -114,7 +122,8 @@ export function OperationFormPage({ config }: { config: OperationConfig }) {
   const products = useQuery({ queryKey: queryKeys.products.list({ page: 1, pageSize: 100 }), queryFn: () => productService.listProducts({ page: 1, pageSize: 100 }) });
   const profiles = useQuery({ queryKey: queryKeys.responsibleUsers.all, queryFn: () => authService.listProfiles() });
   const operation = useQuery({ queryKey: queryKeys.operations.detail(id ?? ""), queryFn: () => operationService.getOperation(id!), enabled: isExisting });
-  const initialValues = useMemo<FormInput>(() => ({ partnerName: "", scheduledDate: todayLocal(), responsibleUserId: "", locationId: "", reason: "", lines: [{ productId: "", quantity: "1" }] }), []);
+  const schema = useMemo(() => operationFormSchema(config), [config]);
+  const initialValues = useMemo<FormInput>(() => ({ partnerName: "", scheduledDate: todayLocal(), responsibleUserId: "", sourceLocationId: "", destinationLocationId: "", reason: "", lines: [{ productId: "", quantity: "1" }] }), []);
   const { register, control, handleSubmit, reset, formState: { errors } } = useForm<FormInput, unknown, FormOutput>({ resolver: zodResolver(schema), defaultValues: initialValues });
   const { fields, append, remove } = useFieldArray({ control, name: "lines" });
   const detail = operation.data;
@@ -206,10 +215,11 @@ export function OperationFormPage({ config }: { config: OperationConfig }) {
           <CardHeader><CardTitle>{config.singular} details</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {detail && <Field label="Reference" id="operation-reference"><TextInput id="operation-reference" readOnly value={detail.reference} /></Field>}
-            <Field label={config.partnerLabel} id="operation-partner"><TextInput id="operation-partner" placeholder={config.type === "RECEIPT" ? "Vendor or supplier" : "Customer or destination"} disabled={!editable} {...register("partnerName")} /></Field>
+            {config.showPartner && <Field label={config.partnerLabel} id="operation-partner"><TextInput id="operation-partner" placeholder={config.type === "RECEIPT" ? "Vendor or supplier" : "Customer or destination"} disabled={!editable} {...register("partnerName")} /></Field>}
             <Field label="Scheduled Date" id="operation-date" error={errors.scheduledDate?.message}><TextInput id="operation-date" type="date" disabled={!editable} {...register("scheduledDate")} /></Field>
             <Field label="Responsible" id="operation-responsible"><SelectInput id="operation-responsible" disabled={!editable} {...register("responsibleUserId")}><option value="">Not assigned</option>{profiles.data.map((profile) => <option key={profile.id} value={profile.id}>{profile.displayName}</option>)}</SelectInput></Field>
-            <Field label={config.locationLabel} id="operation-location" error={errors.locationId?.message}><SelectInput id="operation-location" disabled={!editable} {...register("locationId")}><option value="">Choose a location</option>{locations.data.map((location) => <option key={location.id} value={location.id}>{location.warehouseName} / {location.name}</option>)}</SelectInput></Field>
+            {(config.locationMode === "source" || config.locationMode === "both") && <Field label={config.locationMode === "both" ? config.sourceLocationLabel ?? "Source Location" : config.locationLabel} id="operation-source-location" error={errors.sourceLocationId?.message}><SelectInput id="operation-source-location" disabled={!editable} {...register("sourceLocationId")}><option value="">Choose a source location</option>{locations.data.map((location) => <option key={location.id} value={location.id}>{location.warehouseName} / {location.name}</option>)}</SelectInput></Field>}
+            {(config.locationMode === "destination" || config.locationMode === "both") && <Field label={config.locationMode === "both" ? config.destinationLocationLabel ?? "Destination Location" : config.locationLabel} id="operation-destination-location" error={errors.destinationLocationId?.message}><SelectInput id="operation-destination-location" disabled={!editable} {...register("destinationLocationId")}><option value="">Choose a destination location</option>{locations.data.map((location) => <option key={location.id} value={location.id}>{location.warehouseName} / {location.name}</option>)}</SelectInput></Field>}
             {config.showDeliveryOperationType && <Field label="Operation Type" id="operation-subtype"><SelectInput id="operation-subtype" disabled value=""><option value=""> </option></SelectInput><span className="text-xs text-muted">The backend contract does not define delivery subtypes.</span></Field>}
             {config.showReason && <Field className="sm:col-span-2 lg:col-span-3" label="Reason" id="operation-reason"><TextAreaInput id="operation-reason" disabled={!editable} {...register("reason")} /></Field>}
           </CardContent>
@@ -229,7 +239,7 @@ export function OperationFormPage({ config }: { config: OperationConfig }) {
                   </Field>
                   <Field label={config.type === "ADJUSTMENT" ? "Physical Count" : "Quantity"} id={`operation-quantity-${index}`} error={errors.lines?.[index]?.quantity?.message}>
                     <TextInput id={`operation-quantity-${index}`} type="number" min="0" step="0.001" disabled={!editable} {...register(`lines.${index}.quantity`)} />
-                    {config.type === "DELIVERY" && lineDetail && <span className="mt-1 block text-xs text-muted">Free to Use at source: {lineDetail.freeToUseAtSource === null || lineDetail.freeToUseAtSource === undefined ? "—" : formatQuantity(lineDetail.freeToUseAtSource)}</span>}
+                    {(config.type === "DELIVERY" || config.type === "TRANSFER") && lineDetail && <span className="mt-1 block text-xs text-muted">Free to Use at source: {lineDetail.freeToUseAtSource === null || lineDetail.freeToUseAtSource === undefined ? "—" : formatQuantity(lineDetail.freeToUseAtSource)}</span>}
                   </Field>
                   {editable ? <div className="flex items-end justify-end"><Button type="button" variant="ghost" size="icon" aria-label={`Remove product line ${index + 1}`} disabled={fields.length === 1} onClick={() => remove(index)}><Trash2 size={16} /></Button></div> : <div className="flex items-end justify-end text-xs text-muted">{lineDetail ? `Line ${lineDetail.lineNumber}` : ""}</div>}
                   {shortage && <p className="text-sm text-red-100 sm:col-span-3">Shortage · requested {formatQuantity(shortage.requested)} · available Free to Use {formatQuantity(shortage.available)}</p>}

@@ -170,7 +170,7 @@ export const operationService = {
       }));
 
       let freeToUse = new Map<string, number>();
-      if (row.type === "DELIVERY" && row.source_location_id && productIds.length) {
+      if ((row.type === "DELIVERY" || row.type === "TRANSFER") && row.source_location_id && productIds.length) {
         const availability = await client.from("stock_with_free_to_use").select("product_id, free_to_use").eq("location_id", row.source_location_id).in("product_id", productIds);
         if (availability.error) throw availability.error;
         freeToUse = new Map(availability.data.map((stock) => [stock.product_id, Number(stock.free_to_use)]));

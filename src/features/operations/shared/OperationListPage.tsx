@@ -32,6 +32,9 @@ export function OperationListPage({ config }: { config: OperationConfig }) {
   const warehouses = useQuery({ queryKey: queryKeys.warehouses.all, queryFn: () => warehouseService.listWarehouses() });
   const locations = useQuery({ queryKey: queryKeys.locations.list(filters.warehouseId), queryFn: () => locationService.listLocations({ warehouseId: filters.warehouseId }) });
   const operations = useQuery({ queryKey: queryKeys.operations.list(config.type, filters), queryFn: () => operationService.listOperations(config.type, filters) });
+  const visibleStatuses: OperationStatus[] = config.supportsWaiting
+    ? ["DRAFT", "WAITING", "READY", "DONE", "CANCELED"]
+    : ["DRAFT", "READY", "DONE", "CANCELED"];
   const setFilter = <K extends keyof OperationFilters>(key: K, value: OperationFilters[K]) => setFilters((current) => ({ ...current, [key]: value || undefined }));
 
   const columns: Column<OperationListItem>[] = [
@@ -53,7 +56,7 @@ export function OperationListPage({ config }: { config: OperationConfig }) {
       <Card className="mb-5">
         <CardContent className="grid gap-3 pt-5 md:grid-cols-2 xl:grid-cols-[minmax(14rem,1fr)_10rem_12rem_12rem_12rem_auto]">
           <Field label="Search reference or contact" id="operation-search"><TextInput id="operation-search" placeholder="Reference, vendor, or customer" value={filters.search ?? ""} onChange={(event) => setFilter("search", event.target.value)} /></Field>
-          <Field label="Status" id="operation-status"><SelectInput id="operation-status" value={filters.status ?? "ALL"} onChange={(event) => setFilter("status", event.target.value as OperationStatus | "ALL")}><option value="ALL">All statuses</option>{statuses.slice(1).map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}</SelectInput></Field>
+          <Field label="Status" id="operation-status"><SelectInput id="operation-status" value={filters.status ?? "ALL"} onChange={(event) => setFilter("status", event.target.value as OperationStatus | "ALL")}><option value="ALL">All statuses</option>{statuses.filter((status) => visibleStatuses.includes(status.value as OperationStatus)).map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}</SelectInput></Field>
           <Field label="Warehouse" id="operation-warehouse"><SelectInput id="operation-warehouse" value={filters.warehouseId ?? ""} onChange={(event) => { setFilter("warehouseId", event.target.value); setFilter("locationId", undefined); }}><option value="">All warehouses</option>{(warehouses.data ?? []).map((warehouse) => <option key={warehouse.id} value={warehouse.id}>{warehouse.name}</option>)}</SelectInput></Field>
           <Field label="Location" id="operation-location"><SelectInput id="operation-location" value={filters.locationId ?? ""} onChange={(event) => setFilter("locationId", event.target.value)}><option value="">All locations</option>{(locations.data ?? []).map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}</SelectInput></Field>
           <Field label="Scheduled date" id="operation-date"><TextInput id="operation-date" type="date" value={filters.scheduledDate ?? ""} onChange={(event) => setFilter("scheduledDate", event.target.value)} /></Field>
@@ -66,7 +69,8 @@ export function OperationListPage({ config }: { config: OperationConfig }) {
       {operations.isLoading ? <LoadingState label={`Loading ${config.title.toLowerCase()}`} /> : operations.isError ? <ErrorState message={toAppError(operations.error).message} onRetry={() => void operations.refetch()} /> : operations.data?.length ? (
         view === "list" ? <DataTable columns={columns} rows={operations.data} onRowClick={open} rowLabel={(row) => `Open ${row.reference}`} /> : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            {statuses.slice(1).map((status) => {
+            {visibleStatuses.map((statusValue) => {
+              const status = statuses.find((item) => item.value === statusValue)!;
               const cards = operations.data?.filter((operation) => operation.status === status.value) ?? [];
               return <section key={status.value} className="min-h-48 rounded-2xl border border-line bg-white/[.02] p-3" aria-label={`${status.label} operations`}>
                 <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-semibold">{status.label}</h2><span className="text-xs text-muted">{cards.length}</span></div>
