@@ -1363,7 +1363,7 @@ RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $body
+AS $body$
 DECLARE
   v_user_id   uuid;
   v_product_id uuid;
@@ -1412,4 +1412,4 @@ BEGIN
 
   RETURN v_result;
 END;
-$body;
+$body$;
