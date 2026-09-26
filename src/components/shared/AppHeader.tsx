@@ -1,12 +1,25 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Menu, Package2, UserRound, X } from "lucide-react";
+import { LogOut, Menu, Package2, UserRound, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `nav-link${isActive ? " nav-link-active" : ""}`;
 
 export function AppHeader() {
   const [open, setOpen] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+  const { profile, user, signOut } = useAuth();
+  const name = profile?.displayName || user?.email || "My profile";
+
+  async function handleSignOut() {
+    setSignOutError(null);
+    try {
+      await signOut();
+    } catch {
+      setSignOutError("Could not sign out. Check your connection and try again.");
+    }
+  }
 
   return (
     <header className="border-b border-line bg-panel/90 backdrop-blur">
@@ -40,10 +53,20 @@ export function AppHeader() {
           </details>
         </nav>
 
-        <div className="hidden md:block">
-          <NavLink to="/profile" className="profile-control" aria-label="My profile">
-            <UserRound size={17} aria-hidden="true" />
-          </NavLink>
+        <div className="relative hidden md:block">
+          <details className="nav-menu group">
+            <summary className="profile-control" aria-label="Profile menu"><UserRound size={17} aria-hidden="true" /></summary>
+            <div className="nav-dropdown right-0 left-auto min-w-56">
+              <div className="border-b border-line px-3 py-2">
+                <p className="truncate text-sm font-medium text-ink">{name}</p>
+                {user?.email && <p className="truncate text-xs text-muted">{user.email}</p>}
+              </div>
+              <NavLink to="/profile">My Profile</NavLink>
+              <button type="button" className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-muted hover:bg-white/5 hover:text-ink" onClick={handleSignOut}>
+                <LogOut size={15} aria-hidden="true" /> Log Out
+              </button>
+            </div>
+          </details>
         </div>
 
         <button
@@ -57,6 +80,7 @@ export function AppHeader() {
         </button>
       </div>
 
+      {signOutError && <p className="border-t border-red-400/20 bg-red-500/10 px-4 py-2 text-sm text-red-200" role="alert">{signOutError}</p>}
       {open && (
         <nav className="grid gap-1 border-t border-line px-4 py-3 md:hidden" aria-label="Mobile navigation">
           <NavLink onClick={() => setOpen(false)} to="/dashboard" className={linkClass}>Dashboard</NavLink>
@@ -69,7 +93,8 @@ export function AppHeader() {
           <NavLink onClick={() => setOpen(false)} to="/move-history" className={linkClass}>Move History</NavLink>
           <NavLink onClick={() => setOpen(false)} to="/settings/warehouses" className={linkClass}>Warehouses</NavLink>
           <NavLink onClick={() => setOpen(false)} to="/settings/locations" className={linkClass}>Locations</NavLink>
-          <NavLink onClick={() => setOpen(false)} to="/profile" className={linkClass}>My Profile</NavLink>
+          <NavLink onClick={() => setOpen(false)} to="/profile" className={linkClass}>My Profile · {name}</NavLink>
+          <button onClick={() => { setOpen(false); void handleSignOut(); }} type="button" className="nav-link flex items-center gap-2 text-left"><LogOut size={15} />Log Out</button>
         </nav>
       )}
     </header>
