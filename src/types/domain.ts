@@ -127,7 +127,21 @@ export type MoveHistoryRow = {
   to: string | null;
   productId: string;
   productName: string;
+  sku: string;
   quantity: number;
   status: OperationStatus;
   movementType: MovementType;
+  operationType: OperationType;
+};
+
+export type DashboardSummary = {
+  receipts: { openCount: number; lateCount: number; waitingCount: number };
+  deliveries: { openCount: number; lateCount: number; waitingCount: number };
+  totalProducts: number;
+  totalStock: number;
+  lowStockItems: number;
+  outOfStockItems: number;
+  pendingReceipts: number;
+  pendingDeliveries: number;
+  scheduledTransfers: number;
 };

@@ -6,6 +6,7 @@ import { getSupabaseClient } from "./supabaseClient";
 export type OperationFilters = {
   search?: string;
   status?: OperationStatus | "ALL";
+  openOnly?: boolean;
   locationId?: string;
   warehouseId?: string;
   scheduledDate?: string;
@@ -63,7 +64,8 @@ export const operationService = {
       }
 
       let query = client.from("operations").select(operationSelect).eq("type", type).order("scheduled_date", { ascending: false }).order("created_at", { ascending: false });
-      if (filters.status && filters.status !== "ALL") query = query.eq("status", filters.status);
+      if (filters.openOnly) query = query.in("status", ["DRAFT", "WAITING", "READY"]);
+      else if (filters.status && filters.status !== "ALL") query = query.eq("status", filters.status);
       if (filters.scheduledDate) query = query.eq("scheduled_date", filters.scheduledDate);
       const locationExpressions = filters.locationId
         ? [`source_location_id.eq.${filters.locationId}`, `destination_location_id.eq.${filters.locationId}`]

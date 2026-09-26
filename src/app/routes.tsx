@@ -16,6 +16,8 @@ import { LocationFormPage } from "../features/settings/pages/LocationFormPage";
 import { OperationListPage } from "../features/operations/shared/OperationListPage";
 import { OperationFormPage } from "../features/operations/shared/OperationFormPage";
 import { operationConfigs } from "../features/operations/shared/operationConfig";
+import { DashboardPage } from "../features/dashboard/DashboardPage";
+import { MoveHistoryPage } from "../features/move-history/MoveHistoryPage";
 
 function AppShell() {
   return (
@@ -71,7 +73,7 @@ export const router = createBrowserRouter([
       {
         element: <AppShell />,
         children: [
-          { path: "/dashboard", element: placeholder("Dashboard") },
+          { path: "/dashboard", element: <DashboardPage /> },
           { path: "/products", element: <ProductsPage /> },
           { path: "/products/new", element: <ProductFormPage /> },
           { path: "/products/:id", element: <ProductFormPage /> },
@@ -88,7 +90,7 @@ export const router = createBrowserRouter([
           { path: "/operations/adjustments", element: <OperationListPage config={operationConfigs.adjustments} /> },
           { path: "/operations/adjustments/new", element: <OperationFormPage config={operationConfigs.adjustments} /> },
           { path: "/operations/adjustments/:id", element: <OperationFormPage config={operationConfigs.adjustments} /> },
-          { path: "/move-history", element: placeholder("Move History") },
+          { path: "/move-history", element: <MoveHistoryPage /> },
           { path: "/settings/warehouses", element: <WarehousesPage /> },
           { path: "/settings/warehouses/new", element: <WarehouseFormPage /> },
           { path: "/settings/warehouses/:id", element: <WarehouseFormPage /> },
