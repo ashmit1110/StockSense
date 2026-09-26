@@ -6,6 +6,13 @@ import { LoginPage } from "../features/auth/pages/LoginPage";
 import { SignupPage } from "../features/auth/pages/SignupPage";
 import { ForgotPasswordPage } from "../features/auth/pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "../features/auth/pages/ResetPasswordPage";
+import { ProductsPage } from "../features/products/pages/ProductsPage";
+import { ProductFormPage } from "../features/products/pages/ProductFormPage";
+import { StockPage } from "../features/stock/pages/StockPage";
+import { WarehousesPage } from "../features/settings/pages/WarehousesPage";
+import { WarehouseFormPage } from "../features/settings/pages/WarehouseFormPage";
+import { LocationsPage } from "../features/settings/pages/LocationsPage";
+import { LocationFormPage } from "../features/settings/pages/LocationFormPage";
 
 function AppShell() {
   return (
@@ -62,10 +69,10 @@ export const router = createBrowserRouter([
         element: <AppShell />,
         children: [
           { path: "/dashboard", element: placeholder("Dashboard") },
-          { path: "/products", element: placeholder("Products") },
-          { path: "/products/new", element: placeholder("New product") },
-          { path: "/products/:id", element: placeholder("Product details") },
-          { path: "/stock", element: placeholder("Stock") },
+          { path: "/products", element: <ProductsPage /> },
+          { path: "/products/new", element: <ProductFormPage /> },
+          { path: "/products/:id", element: <ProductFormPage /> },
+          { path: "/stock", element: <StockPage /> },
           { path: "/operations/receipts", element: placeholder("Receipts") },
           { path: "/operations/receipts/new", element: placeholder("New receipt") },
           { path: "/operations/receipts/:id", element: placeholder("Receipt details") },
@@ -79,12 +86,12 @@ export const router = createBrowserRouter([
           { path: "/operations/adjustments/new", element: placeholder("New adjustment") },
           { path: "/operations/adjustments/:id", element: placeholder("Adjustment details") },
           { path: "/move-history", element: placeholder("Move History") },
-          { path: "/settings/warehouses", element: placeholder("Warehouses") },
-          { path: "/settings/warehouses/new", element: placeholder("New warehouse") },
-          { path: "/settings/warehouses/:id", element: placeholder("Warehouse details") },
-          { path: "/settings/locations", element: placeholder("Locations") },
-          { path: "/settings/locations/new", element: placeholder("New location") },
-          { path: "/settings/locations/:id", element: placeholder("Location details") },
+          { path: "/settings/warehouses", element: <WarehousesPage /> },
+          { path: "/settings/warehouses/new", element: <WarehouseFormPage /> },
+          { path: "/settings/warehouses/:id", element: <WarehouseFormPage /> },
+          { path: "/settings/locations", element: <LocationsPage /> },
+          { path: "/settings/locations/new", element: <LocationFormPage /> },
+          { path: "/settings/locations/:id", element: <LocationFormPage /> },
           { path: "/profile", element: placeholder("My profile") },
           { path: "*", element: placeholder("Page not found") },
         ],

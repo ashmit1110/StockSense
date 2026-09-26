@@ -7,6 +7,16 @@ export type Profile = {
   role: UserRole;
 };
 
+export type Category = { id: string; name: string };
+
+export type Warehouse = {
+  id: string;
+  name: string;
+  shortCode: string;
+  address: string | null;
+  locationCount: number;
+};
+
 export type LocationSummary = {
   id: string;
   name: string;
@@ -14,6 +24,10 @@ export type LocationSummary = {
   warehouseId: string;
   warehouseName: string;
   warehouseShortCode?: string;
+};
+
+export type Location = LocationSummary & {
+  stockRows: { productId: string; productName: string; sku: string; onHand: number; freeToUse: number }[];
 };
 
 export type OperationLine = {
@@ -77,6 +91,7 @@ export type Product = {
 };
 
 export type StockItem = {
+  id: string;
   productId: string;
   productName: string;
   sku: string;
@@ -91,7 +106,13 @@ export type StockItem = {
   freeToUse: number;
 };
 
+export type StockUpdateResult = {
+  operation: import("./database.types").Json;
+  stock: { productId: string; locationId: string; onHand: number; freeToUse: number };
+};
+
 export type MoveHistoryRow = {
+  id: string;
   ledgerId: string;
   operationId: string;
   reference: string;
