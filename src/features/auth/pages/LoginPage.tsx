@@ -33,7 +33,7 @@ export function LoginPage() {
   return (
     <AuthLayout title="Log in" description="Use your email address to access StockSense.">
       <form className="grid gap-4" onSubmit={onSubmit} noValidate>
-        <AuthField label="Email" type="email" autoComplete="email" {...register("email")} error={errors.email?.message} />
+        <AuthField label="Login Id" type="email" autoComplete="email" {...register("email")} error={errors.email?.message} />
         <AuthField label="Password" type="password" autoComplete="current-password" {...register("password")} error={errors.password?.message} />
         {submitError && <p role="alert" className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">{submitError}</p>}
         <div className="flex justify-end">

@@ -145,6 +145,21 @@ export function OperationFormPage({ config }: { config: OperationConfig }) {
     },
   });
 
+  const readyMutation = useMutation({
+    mutationFn: async (values: FormOutput) => {
+      if (!id) throw new Error("Save this operation as a Draft before marking it Ready.");
+      await operationService.updateOperation(id, toOperationInput(values, config));
+      return operationService.markReady(id);
+    },
+    onSuccess: (ready) => {
+      setShortages([]);
+      setNotice(`${config.singular} is Ready. Its requested quantities now follow the backend reservation rules.`);
+      queryClient.setQueryData(queryKeys.operations.detail(ready.id), ready);
+      invalidateOperationData(queryClient, ready.id);
+    },
+    onError: () => { if (id) invalidateOperationData(queryClient, id); },
+  });
+
   const validateMutation = useMutation({
     mutationFn: async (draftValues?: FormOutput) => {
       if (!id || !detail) throw new Error("Save this operation as a Draft before validating it.");
@@ -161,6 +176,7 @@ export function OperationFormPage({ config }: { config: OperationConfig }) {
       queryClient.setQueryData(queryKeys.operations.detail(result.operation.id), result.operation);
       invalidateOperationData(queryClient, result.operation.id);
     },
+    onError: () => { if (id) invalidateOperationData(queryClient, id); },
   });
 
   const cancelMutation = useMutation({
@@ -188,19 +204,24 @@ export function OperationFormPage({ config }: { config: OperationConfig }) {
     if (detail?.status === "DRAFT") void handleSubmit((values) => validateMutation.mutate(values))();
     else validateMutation.mutate(undefined);
   };
+  const handleMarkReady = () => {
+    if (detail?.status === "DRAFT") void handleSubmit((values) => readyMutation.mutate(values))();
+  };
   const saveLabel = saveMutation.isPending ? "Saving…" : "Save draft";
+  const actionsPending = saveMutation.isPending || readyMutation.isPending || validateMutation.isPending || cancelMutation.isPending;
 
   return (
     <>
-      <div className="mb-5"><Button asChild variant="ghost" size="sm"><Link to={`/operations/${config.segment}`}><ArrowLeft size={15} />{config.title}</Link></Button></div>
+      <div className="mb-5 print:hidden"><Button asChild variant="ghost" size="sm"><Link to={`/operations/${config.segment}`}><ArrowLeft size={15} />{config.title}</Link></Button></div>
       <PageHeader title={detail ? config.singular : `New ${config.singular}`} description={detail ? `${detail.reference} · created ${formatDateTime(detail.createdAt)}` : `Enter the ${config.singular.toLowerCase()} details and product quantities.`} />
       {detail && (
         <div className="mb-5 grid gap-4 rounded-xl border border-line bg-white/[.025] p-4 lg:grid-cols-[1fr_auto] lg:items-center">
           <OperationStatusStepper status={detail.status} flow={config.statusFlow} />
           <div className="flex flex-wrap items-center gap-2 print:hidden">
-            {canValidate && <Button disabled={validateMutation.isPending} onClick={handleValidate}><Check size={15} />{validateMutation.isPending ? "Validating…" : detail.status === "WAITING" ? "Retry validation" : "Validate"}</Button>}
-            {config.supportsPrint && <Button variant="outline" disabled={detail.status !== "DONE"} title={detail.status === "DONE" ? "Print this completed operation" : "Printing is available after validation"} onClick={() => window.print()}><Printer size={15} />Print</Button>}
-            {canCancel && <Button variant="outline" disabled={cancelMutation.isPending} onClick={() => { if (window.confirm(`Cancel ${detail.reference}? This cannot be undone.`)) cancelMutation.mutate(); }}><Ban size={15} />{cancelMutation.isPending ? "Canceling…" : "Cancel"}</Button>}
+            {canValidate && <Button disabled={actionsPending} onClick={handleValidate}><Check size={15} />{validateMutation.isPending ? "Validating…" : detail.status === "WAITING" ? "Retry validation" : "Validate"}</Button>}
+            {detail.status === "DRAFT" && <Button variant="outline" disabled={actionsPending} onClick={handleMarkReady}><Check size={15} />{readyMutation.isPending ? "Marking Ready…" : "Mark Ready"}</Button>}
+            {config.supportsPrint && <Button variant="outline" disabled={detail.status !== "DONE" || actionsPending} title={detail.status === "DONE" ? "Print this completed operation" : "Printing is available after validation"} onClick={() => window.print()}><Printer size={15} />Print</Button>}
+            {canCancel && <Button variant="outline" disabled={actionsPending} onClick={() => { if (window.confirm(`Cancel ${detail.reference}? This cannot be undone.`)) cancelMutation.mutate(); }}><Ban size={15} />{cancelMutation.isPending ? "Canceling…" : "Cancel"}</Button>}
           </div>
         </div>
       )}
@@ -208,6 +229,7 @@ export function OperationFormPage({ config }: { config: OperationConfig }) {
       {notice && <p className="mb-4 rounded-lg border border-emerald-300/20 bg-emerald-400/[.06] px-3 py-2 text-sm text-emerald-100" role="status">{notice}</p>}
       {saveMutation.isError && <p className="mb-4 rounded-lg border border-red-300/25 bg-red-400/[.08] p-3 text-sm text-red-100" role="alert">{toAppError(saveMutation.error).message}</p>}
       {validateMutation.isError && <p className="mb-4 rounded-lg border border-red-300/25 bg-red-400/[.08] p-3 text-sm text-red-100" role="alert">{toAppError(validateMutation.error).message}</p>}
+      {readyMutation.isError && <p className="mb-4 rounded-lg border border-red-300/25 bg-red-400/[.08] p-3 text-sm text-red-100" role="alert">{toAppError(readyMutation.error).message}</p>}
       {cancelMutation.isError && <p className="mb-4 rounded-lg border border-red-300/25 bg-red-400/[.08] p-3 text-sm text-red-100" role="alert">{toAppError(cancelMutation.error).message}</p>}
 
       <form className="grid gap-5" onSubmit={handleSubmit((values) => saveMutation.mutate(values))} noValidate>
@@ -251,7 +273,7 @@ export function OperationFormPage({ config }: { config: OperationConfig }) {
 
         {detail?.validatedAt && <p className="text-sm text-muted">Validated {formatDateTime(detail.validatedAt)}.</p>}
         {detail?.canceledAt && <p className="text-sm text-muted">Canceled {formatDateTime(detail.canceledAt)}.</p>}
-        {editable && <div className="flex flex-wrap justify-end gap-2 print:hidden"><Button type="submit" disabled={saveMutation.isPending || validateMutation.isPending} variant="outline"><Save size={15} />{saveLabel}</Button></div>}
+        {editable && <div className="flex flex-wrap justify-end gap-2 print:hidden"><Button type="submit" disabled={actionsPending} variant="outline"><Save size={15} />{saveLabel}</Button></div>}
       </form>
     </>
   );

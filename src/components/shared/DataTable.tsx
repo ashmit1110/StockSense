@@ -25,7 +25,7 @@ export function DataTable<T extends { id: string }>({
               className={onRowClick ? "cursor-pointer transition hover:bg-white/[.035] focus-within:bg-white/[.035]" : "transition hover:bg-white/[.025]"}
               key={row.id}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
-              onKeyDown={onRowClick ? (event) => { if (event.key === "Enter") onRowClick(row); } : undefined}
+              onKeyDown={onRowClick ? (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onRowClick(row); } } : undefined}
               tabIndex={onRowClick ? 0 : undefined}
               aria-label={onRowClick && rowLabel ? rowLabel(row) : undefined}
             >

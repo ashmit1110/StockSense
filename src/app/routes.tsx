@@ -1,6 +1,7 @@
-import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
+import { createBrowserRouter, Link, Navigate, Outlet } from "react-router-dom";
 import { AppHeader } from "../components/shared/AppHeader";
 import { AuthLoading, ProtectedRoute, PublicOnlyRoute } from "../components/shared/ProtectedRoute";
+import { Button } from "../components/ui/Button";
 import { useAuth } from "../contexts/AuthContext";
 import { LoginPage } from "../features/auth/pages/LoginPage";
 import { SignupPage } from "../features/auth/pages/SignupPage";
@@ -18,6 +19,7 @@ import { OperationFormPage } from "../features/operations/shared/OperationFormPa
 import { operationConfigs } from "../features/operations/shared/operationConfig";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { MoveHistoryPage } from "../features/move-history/MoveHistoryPage";
+import { ProfilePage } from "../features/profile/ProfilePage";
 
 function AppShell() {
   return (
@@ -30,14 +32,13 @@ function AppShell() {
   );
 }
 
-function PlaceholderPage({ title }: { title: string }) {
+function NotFoundPage() {
   return (
     <section className="panel-card p-6 sm:p-8">
       <p className="eyebrow">StockSense</p>
-      <h1 className="mt-2 text-2xl font-semibold">{title}</h1>
-      <p className="mt-2 max-w-xl text-sm text-muted">
-        This screen is being connected to the inventory services.
-      </p>
+      <h1 className="mt-2 text-2xl font-semibold">Page not found</h1>
+      <p className="mt-2 max-w-xl text-sm text-muted">That StockSense page does not exist.</p>
+      <Button asChild className="mt-5"><Link to="/dashboard">Back to Dashboard</Link></Button>
     </section>
   );
 }
@@ -47,8 +48,6 @@ function RootRedirect() {
   if (isLoading) return <AuthLoading />;
   return <Navigate to={user ? "/dashboard" : "/login"} replace />;
 }
-
-const placeholder = (title: string) => <PlaceholderPage title={title} />;
 
 export const router = createBrowserRouter([
   {
@@ -97,8 +96,8 @@ export const router = createBrowserRouter([
           { path: "/settings/locations", element: <LocationsPage /> },
           { path: "/settings/locations/new", element: <LocationFormPage /> },
           { path: "/settings/locations/:id", element: <LocationFormPage /> },
-          { path: "/profile", element: placeholder("My profile") },
-          { path: "*", element: placeholder("Page not found") },
+          { path: "/profile", element: <ProfilePage /> },
+          { path: "*", element: <NotFoundPage /> },
         ],
       },
     ],

@@ -187,7 +187,7 @@ export const operationService = {
           sku: product?.sku ?? "—",
           quantity: Number(line.quantity),
           lineNumber: line.line_number,
-          ...(row.type === "DELIVERY" ? { freeToUseAtSource: freeToUse.get(line.product_id) ?? null } : {}),
+          ...((row.type === "DELIVERY" || row.type === "TRANSFER") ? { freeToUseAtSource: freeToUse.get(line.product_id) ?? 0 } : {}),
         };
       });
 

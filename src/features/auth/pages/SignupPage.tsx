@@ -46,7 +46,8 @@ export function SignupPage() {
       ) : (
         <form className="grid gap-4" onSubmit={onSubmit} noValidate>
           <AuthField label="Name" autoComplete="name" {...register("displayName")} error={errors.displayName?.message} />
-          <AuthField label="Email" type="email" autoComplete="email" {...register("email")} error={errors.email?.message} />
+          <AuthField label="Login Id / Email Id" type="email" autoComplete="email" {...register("email")} error={errors.email?.message} />
+          <p className="-mt-2 text-xs text-muted">Your email address is also your Login Id; StockSense does not use a separate username.</p>
           <AuthField label="Password" type="password" autoComplete="new-password" {...register("password")} error={errors.password?.message} />
           <AuthField label="Re-enter password" type="password" autoComplete="new-password" {...register("confirmPassword")} error={errors.confirmPassword?.message} />
           {submitError && <p role="alert" className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">{submitError}</p>}

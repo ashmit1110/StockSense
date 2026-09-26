@@ -39,7 +39,7 @@ export function StockPage() {
 
   if (stock.isLoading || warehouses.isLoading || locations.isLoading || categories.isLoading) return <div className="grid gap-4"><PageHeader title="Stock" /><div className="panel-card p-6 text-sm text-muted">Loading stock…</div></div>;
   if (stock.isError) return <div className="grid gap-4"><PageHeader title="Stock" /><ErrorState message={toAppError(stock.error).message} onRetry={() => void stock.refetch()} /></div>;
-  if (warehouses.isError || locations.isError || categories.isError) return <div className="grid gap-4"><PageHeader title="Stock" /><ErrorState message={toAppError(warehouses.error ?? locations.error ?? categories.error).message} /></div>;
+  if (warehouses.isError || locations.isError || categories.isError) return <div className="grid gap-4"><PageHeader title="Stock" /><ErrorState message={toAppError(warehouses.error ?? locations.error ?? categories.error).message} onRetry={() => { void warehouses.refetch(); void locations.refetch(); void categories.refetch(); }} /></div>;
   if (!stock.data || !warehouses.data || !locations.data || !categories.data) return <div className="grid gap-4"><PageHeader title="Stock" /><div className="panel-card p-6 text-sm text-muted">Loading stock…</div></div>;
 
   return (

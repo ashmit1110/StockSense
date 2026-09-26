@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { cloneElement, isValidElement, type InputHTMLAttributes, type ReactElement, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
 
@@ -9,11 +9,14 @@ export function Field({ label, error, className, children, ...props }: {
   id?: string;
   children: ReactNode;
 }) {
+  const control = error && isValidElement(children)
+    ? cloneElement(children as ReactElement<{ "aria-invalid"?: boolean; "aria-describedby"?: string }>, { "aria-invalid": true, "aria-describedby": props.id ? `${props.id}-error` : undefined })
+    : children;
   return (
     <div className={cn("grid gap-1.5", className)}>
       <label className="text-sm font-medium text-ink" htmlFor={props.id}>{label}</label>
-      {children}
-      {error && <p className="text-xs text-red-300" role="alert">{error}</p>}
+      {control}
+      {error && <p id={props.id ? `${props.id}-error` : undefined} className="text-xs text-red-300" role="alert">{error}</p>}
     </div>
   );
 }
