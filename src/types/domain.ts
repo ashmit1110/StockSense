@@ -47,7 +47,7 @@ export type OperationSummary = {
   reference: string;
   status: OperationStatus;
   scheduledDate: string;
-  isLate: boolean;
+  isLate?: boolean;
   responsibleUser: { id: string; displayName: string } | null;
   sourceLocation: LocationSummary | null;
   destinationLocation: LocationSummary | null;
@@ -62,6 +62,11 @@ export type OperationDetail = OperationSummary & {
   validatedAt: string | null;
   canceledAt: string | null;
   createdBy?: string | null;
+};
+
+export type OperationListItem = OperationSummary & {
+  lineCount: number;
+  quantitySummary: { productName: string; quantity: number; unitOfMeasure: string }[];
 };
 
 export type Shortage = {

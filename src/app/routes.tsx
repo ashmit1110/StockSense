@@ -13,6 +13,9 @@ import { WarehousesPage } from "../features/settings/pages/WarehousesPage";
 import { WarehouseFormPage } from "../features/settings/pages/WarehouseFormPage";
 import { LocationsPage } from "../features/settings/pages/LocationsPage";
 import { LocationFormPage } from "../features/settings/pages/LocationFormPage";
+import { OperationListPage } from "../features/operations/shared/OperationListPage";
+import { OperationFormPage } from "../features/operations/shared/OperationFormPage";
+import { operationConfigs } from "../features/operations/shared/operationConfig";
 
 function AppShell() {
   return (
@@ -73,12 +76,12 @@ export const router = createBrowserRouter([
           { path: "/products/new", element: <ProductFormPage /> },
           { path: "/products/:id", element: <ProductFormPage /> },
           { path: "/stock", element: <StockPage /> },
-          { path: "/operations/receipts", element: placeholder("Receipts") },
-          { path: "/operations/receipts/new", element: placeholder("New receipt") },
-          { path: "/operations/receipts/:id", element: placeholder("Receipt details") },
-          { path: "/operations/deliveries", element: placeholder("Deliveries") },
-          { path: "/operations/deliveries/new", element: placeholder("New delivery") },
-          { path: "/operations/deliveries/:id", element: placeholder("Delivery details") },
+          { path: "/operations/receipts", element: <OperationListPage config={operationConfigs.receipts} /> },
+          { path: "/operations/receipts/new", element: <OperationFormPage config={operationConfigs.receipts} /> },
+          { path: "/operations/receipts/:id", element: <OperationFormPage config={operationConfigs.receipts} /> },
+          { path: "/operations/deliveries", element: <OperationListPage config={operationConfigs.deliveries} /> },
+          { path: "/operations/deliveries/new", element: <OperationFormPage config={operationConfigs.deliveries} /> },
+          { path: "/operations/deliveries/:id", element: <OperationFormPage config={operationConfigs.deliveries} /> },
           { path: "/operations/transfers", element: placeholder("Transfers") },
           { path: "/operations/transfers/new", element: placeholder("New transfer") },
           { path: "/operations/transfers/:id", element: placeholder("Transfer details") },

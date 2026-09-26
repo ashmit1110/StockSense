@@ -34,3 +34,12 @@ button, a, summary { -webkit-tap-highlight-color: transparent; }
   .nav-dropdown a { @apply rounded-lg px-3 py-2 text-sm text-muted hover:bg-white/5 hover:text-ink; }
   .profile-control, .icon-button { @apply grid size-9 place-items-center rounded-xl border border-line text-muted transition hover:border-accent/50 hover:text-ink; }
 }
+
+@media print {
+  :root { color-scheme: light; }
+  body { background: #fff !important; color: #111 !important; }
+  header, .print\:hidden { display: none !important; }
+  main { max-width: none !important; padding: 0 !important; }
+  .panel-card { background: #fff !important; border-color: #bbb !important; box-shadow: none !important; }
+  * { color: #111 !important; border-color: #ccc !important; }
+}

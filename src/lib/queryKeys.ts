@@ -1,5 +1,6 @@
 export const queryKeys = {
   profile: { all: ["profile"] as const, detail: (id: string) => ["profile", id] as const },
+  responsibleUsers: { all: ["responsible-users"] as const },
   categories: { all: ["categories"] as const },
   products: {
     all: ["products"] as const,

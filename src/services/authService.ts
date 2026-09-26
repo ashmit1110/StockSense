@@ -88,6 +88,16 @@ export const authService = {
     }
   },
 
+  async listProfiles(): Promise<Profile[]> {
+    try {
+      const { data, error } = await getSupabaseClient().from("profiles").select("id, display_name, email, role").order("display_name");
+      if (error) throw error;
+      return data.map((row) => ({ id: row.id, displayName: row.display_name, email: row.email, role: row.role }));
+    } catch (error) {
+      throw toAppError(error);
+    }
+  },
+
   async updateProfile(userId: string, displayName: string): Promise<Profile> {
     try {
       const { data, error } = await getSupabaseClient()
